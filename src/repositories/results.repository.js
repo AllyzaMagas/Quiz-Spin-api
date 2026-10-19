@@ -31,9 +31,21 @@ const { sequelize } = require('../models');
 
 async function findFinishedGamePlayers(since) {
   const sql = `
-    SELECT NULL AS session_code
-     WHERE FALSE
-  `; // <- replace this placeholder with your query
+    SELECT
+      ts.session_code AS session_code,
+      ts.started_at,
+      ts.ended_at,
+      u.school_id,
+      tp.nickname,
+      tp.score,
+      tp.completed
+    FROM tournament_sessions ts
+    JOIN tournament_players tp ON tp.tournament_id = ts.tournament_id
+    JOIN users u ON u.user_id = tp.user_id
+    WHERE ts.status = 'completed'
+      AND (CAST(:since AS timestamptz) IS NULL OR ts.ended_at > :since)
+    ORDER BY ts.ended_at, tp.score DESC
+  `;
 
   return sequelize.query(sql, {
     type: QueryTypes.SELECT,
